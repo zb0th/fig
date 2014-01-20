@@ -207,8 +207,11 @@ class TopLevelCommand(Command):
         if options['-d'] or options['-T'] or not sys.stdin.isatty():
             tty = False
 
+        shell_arguments = [options['COMMAND']] + options['ARGS']
+        shell_string = ' '.join('"%s"' % s.replace('"', '\\"') for s in shell_arguments)
+
         container_options = {
-            'command': [options['COMMAND']] + options['ARGS'],
+            'command': ['sh', '-c', shell_string],
             'tty': tty,
             'stdin_open': not options['-d'],
         }
