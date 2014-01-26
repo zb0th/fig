@@ -13,6 +13,8 @@ script:
 - pwd
 - env
 - sekexe/run "`pwd`/script/travis $TRAVIS_PYTHON_VERSION"
+after_success:
+- coveralls
 deploy:
   provider: pypi
   user: orchard
