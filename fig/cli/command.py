@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from docker import Client
 from requests.exceptions import ConnectionError
+from urlparse import urlparse
 import errno
 import logging
 import os
@@ -68,12 +69,26 @@ class Command(DocoptCommand):
                 raise errors.FigFileNotFound(os.path.basename(e.filename))
             raise errors.UserError(six.text_type(e))
 
+    def expand_env_vars(self, config, base_url):
+        def expand(env):
+            for k, v in env.iteritems():
+                url = urlparse(base_url)
+                env[k] = v.replace('$DOCKER_HOST_IP', url.hostname) if isinstance(v, basestring) else v
+            return env
+        for k, v in config.iteritems():
+            environment = config[k].get('environment', None)
+            if environment is not None:
+              config[k]['environment'] = expand(environment)
+        return config
+
     def get_project(self, config_path, project_name=None, verbose=False):
+        config = self.get_config(config_path)
+        client = self.get_client(verbose=verbose)
         try:
             return Project.from_config(
                 self.get_project_name(config_path, project_name),
-                self.get_config(config_path),
-                self.get_client(verbose=verbose))
+                self.expand_env_vars(config, client.base_url),
+                client)
         except ConfigError as e:
             raise errors.UserError(six.text_type(e))
 
