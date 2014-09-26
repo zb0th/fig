@@ -73,12 +73,12 @@ class Command(DocoptCommand):
         def expand(env):
             for k, v in env.iteritems():
                 url = urlparse(base_url)
-                env[k] = v.replace('$DOCKER_HOST_IP', url.hostname) if isinstance(v, basestring) else v
+                if isinstance(v, basestring):
+                  env[k] = v.replace('$DOCKER_HOST_IP', url.hostname)
             return env
         for k, v in config.iteritems():
-            environment = config[k].get('environment', None)
-            if environment is not None:
-              config[k]['environment'] = expand(environment)
+            if 'environment' in config[k]:
+              config[k]['environment'] = expand(config[k]['environment'])
         return config
 
     def get_project(self, config_path, project_name=None, verbose=False):
